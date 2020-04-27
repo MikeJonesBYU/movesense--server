@@ -1,0 +1,11 @@
+# Ignore IDE/system files
+.vscode/
+*.pyc
+*.swp
+*._*
+.env
+
+# Ignore DB files
+db.sqlite3
+.DS_STORE
+.coverage
