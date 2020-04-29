@@ -7,7 +7,9 @@ To install all python dependencies, run
 pip install -r misc/requirements
 ```
 
-To start the server on the default port, run
+## Usage
+### Base Server
+To start a basic server on the default port, run
 ```
 python server.py
 ```
@@ -20,4 +22,10 @@ python server.py -p [port]
 More information can be found at
 ```
 python server.py -h
+```
+
+### IOServer
+If the mobile app communicates with socket.io, the IOServer can be used. To start one, run
+```
+python io_server.py
 ```
