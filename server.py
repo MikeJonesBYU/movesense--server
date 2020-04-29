@@ -1,9 +1,8 @@
 from argparse import ArgumentParser
-from BaseHTTPServer import HTTPServer
+from http.server import HTTPServer
 
 from settings import *
 from handlers.test import TestHandler
-
 
 def stop(server):
     print('\nShutting down the server...')

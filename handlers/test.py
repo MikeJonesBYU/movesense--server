@@ -1,4 +1,4 @@
-from BaseHTTPServer import BaseHTTPRequestHandler
+from http.server import BaseHTTPRequestHandler
 
 class TestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
