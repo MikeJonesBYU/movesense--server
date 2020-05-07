@@ -9,10 +9,10 @@ DISCONNECT = 'disconnect'
 ###
 CLIENT_DATA = 'client_data'
 ANGULAR_VELOCITY_ENTRY = 'av_entry'
-LINEAR_ACCELERATION_ENTRY = 'la_entry'
 HEART_RATE_ENTRY = 'hr_entry'
-TEMPERATURE_ENTRY = 'temp_entry'
+LINEAR_ACCELERATION_ENTRY = 'la_entry'
 MAGNETIC_FIELD_ENTRY = 'mf_entry'
+TEMPERATURE_ENTRY = 'te_entry'
 
 ###
 # Server Events
@@ -29,6 +29,20 @@ Y = 'y'
 Z = 'z'
 MEASUREMENT = 'measurement'
 AVERAGE = 'average'
+
+##
+# Data types
+##
+REAL = 'real'
+
+##
+# Stored Data Paths
+##
+AV_FILE = 'data/angular_velocity.arff'
+HR_FILE = 'data/heart_rate.arff'
+LA_FILE = 'data/linear_acceleration.arff'
+MF_FILE = 'data/magnetic_field.arff'
+TE_FILE = 'data/temperature.arff'
 
 ##
 # Server Default Settings

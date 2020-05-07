@@ -1,0 +1,13 @@
+@relation temperature
+@attribute sensor real
+@attribute time real
+@attribute measurement real
+@attribute class {example}
+@data
+%
+% 1 instances
+%
+1,0,0,example
+%
+%
+%
