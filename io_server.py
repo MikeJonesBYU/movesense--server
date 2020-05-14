@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from argparse import ArgumentParser
 from aiohttp import web
 import socketio
@@ -32,34 +34,29 @@ class IOServer:
                                   attr_types=[
                                       Collection.STRING, Collection.INTEGER,
                                       Collection.REAL, Collection.REAL,
-                                      Collection.REAL],
-                                  label_count=1)
+                                      Collection.REAL])
         self.hr_data = Collection('heart_rate', [],
                                   attr_names=[SENSOR, TIME, AVERAGE],
                                   attr_types=[
                                       Collection.STRING, Collection.INTEGER,
-                                      Collection.REAL],
-                                  label_count=1)
+                                      Collection.REAL])
         self.la_data = Collection('linear_acceleration', [],
                                   attr_names=[SENSOR, TIME, X, Y, Z],
                                   attr_types=[
                                       Collection.STRING, Collection.INTEGER,
                                       Collection.REAL, Collection.REAL,
-                                      Collection.REAL],
-                                  label_count=1)
+                                      Collection.REAL])
         self.mf_data = Collection('magnetic_field', [],
                                   attr_names=[SENSOR, TIME, X, Y, Z],
                                   attr_types=[
                                       Collection.STRING, Collection.INTEGER,
                                       Collection.REAL, Collection.REAL,
-                                      Collection.REAL],
-                                  label_count=1)
+                                      Collection.REAL])
         self.te_data = Collection('temperature', [],
                                   attr_names=[SENSOR, TIME, MEASUREMENT],
                                   attr_types=[
                                       Collection.STRING, Collection.INTEGER,
-                                      Collection.REAL],
-                                  label_count=1)
+                                      Collection.REAL])
 
         # Setup Handlers
         base_handler = BaseHandler()
@@ -87,7 +84,7 @@ class IOServer:
         @self.sio.on(ANGULAR_VELOCITY_ENTRY)
         async def receive_angular_velocity(sid, data):
             print('IO::{}::ID={}, data={}'.format(ANGULAR_VELOCITY_ENTRY, sid, data))
-            analysis = self.av_data.add_entry(data)
+            analysis = await self.av_data.add_entry(data)
             if analysis is not None:
                 print('IO::{}::ANALYSIS={}'.format(ANGULAR_VELOCITY_ENTRY, analysis))
                 await self.send(SERVER_DATA, analysis)
@@ -95,7 +92,7 @@ class IOServer:
         @self.sio.on(HEART_RATE_ENTRY)
         async def receive_heart_rate(sid, data):
             print('IO::{}::ID={}, data={}'.format(HEART_RATE_ENTRY, sid, data))
-            analysis = self.hr_data.add_entry(data)
+            analysis = await self.hr_data.add_entry(data)
             if analysis is not None:
                 print('IO::{}::ANALYSIS={}'.format(HEART_RATE_ENTRY, analysis))
                 await self.send(SERVER_DATA, analysis)
@@ -103,7 +100,7 @@ class IOServer:
         @self.sio.on(LINEAR_ACCELERATION_ENTRY)
         async def receive_linear_acceleration(sid, data):
             print('IO::{}::ID={}, data={}'.format(LINEAR_ACCELERATION_ENTRY, sid, data))
-            analysis = self.la_data.add_entry(data)
+            analysis = await self.la_data.add_entry(data)
             if analysis is not None:
                 print('IO::{}::ANALYSIS={}'.format(LINEAR_ACCELERATION_ENTRY, analysis))
                 await self.send(SERVER_DATA, analysis)
@@ -111,7 +108,7 @@ class IOServer:
         @self.sio.on(MAGNETIC_FIELD_ENTRY)
         async def receive_magnetic_field(sid, data):
             print('IO::{}::ID={}, data={}'.format(MAGNETIC_FIELD_ENTRY, sid, data))
-            analysis = self.mf_data.add_entry(data)
+            analysis = await self.mf_data.add_entry(data)
             if analysis is not None:
                 print('IO::{}::ANALYSIS={}'.format(MAGNETIC_FIELD_ENTRY, analysis))
                 await self.send(SERVER_DATA, analysis)
@@ -119,7 +116,7 @@ class IOServer:
         @self.sio.on(TEMPERATURE_ENTRY)
         async def receive_temperature(sid, data):
             print('IO::{}::ID={}, data={}'.format(TEMPERATURE_ENTRY, sid, data))
-            analysis = self.temp_data.add_entry(data)
+            analysis = await self.temp_data.add_entry(data)
             if analysis is not None:
                 print('IO::{}::ANALYSIS={}'.format(TEMPERATURE_ENTRY, analysis))
                 await self.send(SERVER_DATA, analysis)

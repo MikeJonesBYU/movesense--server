@@ -16,13 +16,13 @@ class Collection:
     BATCH_OVERLAP = 25
 
     def __init__(self, name, data=[], attr_names=[], attr_types=[],
-                 label_count=0, batch_size=BATCH_SIZE,
+                 labels=[], batch_size=BATCH_SIZE,
                  batch_overlap=BATCH_OVERLAP):
         self.name           = name
         self.data           = data
         self.attr_names     = attr_names
         self.attr_types     = attr_types
-        self.label_count    = label_count
+        self.labels         = labels
         self.batch_size     = batch_size
         self.batch_overlap  = batch_overlap
 
@@ -33,7 +33,7 @@ class Collection:
         self.attr_types = a.attr_types.copy()
         self.label_count = label_count
 
-    def add_entry(self, data):
+    async def add_entry(self, data):
         entry = []
         for i in range(len(self.attr_names)):
             name = self.attr_names[i]
@@ -54,7 +54,7 @@ class Collection:
         # Analyze latest batch if ready for it
         if len(self.data) % self.batch_overlap == 0 and \
             len(self.data) >= self.batch_size:
-            analysis = self.analyze_batch(start=(-1*self.batch_size))
+            analysis = await self.analyze_batch(start=(-1*self.batch_size))
 
         # Not ready yet, don't return anything
         else:
@@ -82,7 +82,7 @@ class Collection:
         f.write('%\n%\n%')
         f.close()
 
-    def analyze_all(self, batch_size=None, batch_overlap=None):
+    async def analyze_all(self, batch_size=None, batch_overlap=None):
         analysis = []
         # Use initialized batch_overlap if not overridden
         if batch_overlap is not None and isinstance(batch_overlap, int):
@@ -106,7 +106,7 @@ class Collection:
             analysis.append(self.analyze_batch(start, end))
         return analysis
 
-    def analyze_batch(self, start=0, end=-1):
+    async def analyze_batch(self, start=0, end=-1):
         batch = self.data[start:end]
         
         # TODO: Send batch to be analyzed by ML & generate report
