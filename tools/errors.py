@@ -2,3 +2,7 @@
 
 class AnalyzerError(Exception):
     pass
+
+
+class CollectionError(Exception):
+    pass

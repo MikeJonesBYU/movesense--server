@@ -9,11 +9,7 @@ PORT = 80
 ###
 # Log settings
 ###
-AV_LOG = 'log/av.txt'
-HR_LOG = 'log/hr.txt'
-LA_LOG = 'log/la.txt'
-MF_LOG = 'log/mf.txt'
-TE_LOG = 'log/te.txt'
+LOG_DIR = 'log'
 
 
 ###
