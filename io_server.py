@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 from argparse import ArgumentParser
 from aiohttp import web
 import socketio
@@ -8,13 +9,22 @@ from constants import *
 from settings import *
 from handlers.base import BaseHandler
 from data.collection import Collection
+from tools.analyzer import Analyzer
 
 
 class IOServer:
-    def __init__(self):
+    def __init__(self, clf_dir=CLF_DIR):
         self.sio = socketio.AsyncServer()
         self.app = web.Application()
         self.sio.attach(self.app)
+
+        clf_list = [os.path.join(clf_dir, f) for f in os.listdir(clf_dir) if os.path.isfile(
+            os.path.join(clf_dir, f)) and f.endswith('.pkl')]
+        if len(clf_list) > 0:
+            latest_clf = max(clf_list, key=os.path.getctime)
+        else:
+            latest_clf = None
+        self.analyzer = Analyzer(latest_clf)
 
         # Import data
         # self.av_data = Collection('angular_velocity')
@@ -59,8 +69,9 @@ class IOServer:
                                       Collection.REAL])
 
         # Setup Handlers
-        base_handler = BaseHandler()
+        base_handler = BaseHandler(self.analyzer, clf_dir)
         self.app.router.add_get('/', handler=base_handler.index)
+        self.app.router.add_post('/classifier', handler=base_handler.add_classifier)
 
         # Setup Socket IO
         self.init_socketio()
@@ -70,6 +81,11 @@ class IOServer:
 
     async def send(self, event, data):
         await self.sio.emit(event, data)
+
+    def save_data(self, file, data):
+        file = open(file, 'a')
+        file.write('{}\n'.format(data))
+        file.close()
 
     def init_socketio(self):
         @self.sio.on(CONNECT)
@@ -84,6 +100,7 @@ class IOServer:
         @self.sio.on(ANGULAR_VELOCITY_ENTRY)
         async def receive_angular_velocity(sid, data):
             print('IO::{}::ID={}, data={}'.format(ANGULAR_VELOCITY_ENTRY, sid, data))
+            self.save_data(AV_LOG, data)
             analysis = await self.av_data.add_entry(data)
             if analysis is not None:
                 print('IO::{}::ANALYSIS={}'.format(ANGULAR_VELOCITY_ENTRY, analysis))
@@ -92,6 +109,7 @@ class IOServer:
         @self.sio.on(HEART_RATE_ENTRY)
         async def receive_heart_rate(sid, data):
             print('IO::{}::ID={}, data={}'.format(HEART_RATE_ENTRY, sid, data))
+            self.save_data(HR_LOG, data)
             analysis = await self.hr_data.add_entry(data)
             if analysis is not None:
                 print('IO::{}::ANALYSIS={}'.format(HEART_RATE_ENTRY, analysis))
@@ -100,6 +118,7 @@ class IOServer:
         @self.sio.on(LINEAR_ACCELERATION_ENTRY)
         async def receive_linear_acceleration(sid, data):
             print('IO::{}::ID={}, data={}'.format(LINEAR_ACCELERATION_ENTRY, sid, data))
+            self.save_data(LA_LOG, data)
             analysis = await self.la_data.add_entry(data)
             if analysis is not None:
                 print('IO::{}::ANALYSIS={}'.format(LINEAR_ACCELERATION_ENTRY, analysis))
@@ -108,6 +127,7 @@ class IOServer:
         @self.sio.on(MAGNETIC_FIELD_ENTRY)
         async def receive_magnetic_field(sid, data):
             print('IO::{}::ID={}, data={}'.format(MAGNETIC_FIELD_ENTRY, sid, data))
+            self.save_data(MF_LOG, data)
             analysis = await self.mf_data.add_entry(data)
             if analysis is not None:
                 print('IO::{}::ANALYSIS={}'.format(MAGNETIC_FIELD_ENTRY, analysis))
@@ -116,6 +136,7 @@ class IOServer:
         @self.sio.on(TEMPERATURE_ENTRY)
         async def receive_temperature(sid, data):
             print('IO::{}::ID={}, data={}'.format(TEMPERATURE_ENTRY, sid, data))
+            self.save_data(TE_LOG, data)
             analysis = await self.temp_data.add_entry(data)
             if analysis is not None:
                 print('IO::{}::ANALYSIS={}'.format(TEMPERATURE_ENTRY, analysis))

@@ -2,7 +2,7 @@
 
 from constants import TIME
 from tools.arff import Arff
-
+from tools.analyzer import Analyzer
 
 class Collection:
     # Data Types
