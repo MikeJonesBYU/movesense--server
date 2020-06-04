@@ -3,8 +3,9 @@
 ##
 # IO Events
 ##
-CONNECT     = 'connect'
-DISCONNECT  = 'disconnect'
+CONNECT       = 'connect'
+CONNECT_ERROR = 'connect_error' 
+DISCONNECT    = 'disconnect'
 
 ###
 # Client Events
@@ -27,7 +28,7 @@ REQUEST_RESPONSE = 'request_response'
 ##
 # Client Entry Keys
 ##
-SKATER_ID   = 'skater'
+ATHLETE_ID  = 'athlete'
 SESSION_ID  = 'session'
 SENSOR_ID   = 'sensor'
 TIME        = 'time'

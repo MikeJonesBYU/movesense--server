@@ -43,33 +43,33 @@ class IOServer:
 
         # Initialize with blank data
         self.av_data = Collection('angular_velocity', [],
-                                  attr_names=[SENSOR_ID, TIME, X, Y, Z],
+                                  attr_names=[ATHLETE_ID, SESSION_ID, SENSOR_ID, TIME, X, Y, Z],
                                   attr_types=[
-                                      Collection.STRING, Collection.INTEGER,
-                                      Collection.REAL, Collection.REAL,
-                                      Collection.REAL])
+                                      Collection.STRING, Collection.STRING, Collection.STRING,
+                                      Collection.INTEGER, Collection.REAL, Collection.REAL,
+                                      Collection.REAL], analyzer=self.analyzer)
         self.hr_data = Collection('heart_rate', [],
-                                  attr_names=[SENSOR_ID, TIME, AVERAGE],
+                                  attr_names=[ATHLETE_ID, SESSION_ID, SENSOR_ID, TIME, AVERAGE],
                                   attr_types=[
-                                      Collection.STRING, Collection.INTEGER,
-                                      Collection.REAL])
+                                      Collection.STRING, Collection.STRING, Collection.STRING,
+                                      Collection.INTEGER, Collection.REAL], analyzer=self.analyzer)
         self.la_data = Collection('linear_acceleration', [],
-                                  attr_names=[SENSOR_ID, TIME, X, Y, Z],
+                                  attr_names=[ATHLETE_ID, SESSION_ID, SENSOR_ID, TIME, X, Y, Z],
                                   attr_types=[
-                                      Collection.STRING, Collection.INTEGER,
-                                      Collection.REAL, Collection.REAL,
-                                      Collection.REAL])
+                                      Collection.STRING, Collection.STRING, Collection.STRING,
+                                      Collection.INTEGER, Collection.REAL, Collection.REAL,
+                                      Collection.REAL], analyzer=self.analyzer)
         self.mf_data = Collection('magnetic_field', [],
-                                  attr_names=[SENSOR_ID, TIME, X, Y, Z],
+                                  attr_names=[ATHLETE_ID, SESSION_ID, SENSOR_ID, TIME, X, Y, Z],
                                   attr_types=[
-                                      Collection.STRING, Collection.INTEGER,
-                                      Collection.REAL, Collection.REAL,
-                                      Collection.REAL])
+                                      Collection.STRING, Collection.STRING, Collection.STRING,
+                                      Collection.INTEGER, Collection.REAL, Collection.REAL,
+                                      Collection.REAL], analyzer=self.analyzer)
         self.te_data = Collection('temperature', [],
-                                  attr_names=[SENSOR_ID, TIME, MEASUREMENT],
+                                  attr_names=[ATHLETE_ID, SESSION_ID, SENSOR_ID, TIME, MEASUREMENT],
                                   attr_types=[
-                                      Collection.STRING, Collection.INTEGER,
-                                      Collection.REAL])
+                                      Collection.STRING, Collection.STRING, Collection.STRING,
+                                      Collection.INTEGER, Collection.REAL], analyzer=self.analyzer)
 
         # Setup Handlers
         base_handler = BaseHandler(self.analyzer, clf_dir)
@@ -94,12 +94,15 @@ class IOServer:
         data_type = data.get(DATA_TYPE, None)
         if data_type is None:
             return {}
-        
 
     def init_socketio(self):
         @self.sio.on(CONNECT)
         def connect(sid, environ):
             print('IO::{}::ID={}'.format(CONNECT, sid))
+
+        @self.sio.on(CONNECT_ERROR)
+        def connect_error(sid, data):
+            print('IO::{}::ID={}, data={}'.format(CONNECT_ERROR, sid, data))
         
         @self.sio.on(CLIENT_DATA)
         async def receive_client_data(sid, data):
@@ -168,4 +171,3 @@ if __name__ == '__main__':
         server.serve(port=args.port)
     else:
         server.serve()
-

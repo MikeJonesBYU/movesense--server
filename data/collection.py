@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import asyncio
 import aiomysql
+from random import randint
 
 
 from constants import TIME
@@ -11,14 +12,14 @@ from tools.errors import CollectionError
 
 class Collection:
     # Data Types
-    INTEGER       = 'int'
-    STRING        = 'string'
-    REAL          = 'real'
-    VALUE_NA      = '?'
+    INTEGER  = 'int'
+    STRING   = 'string'
+    REAL     = 'real'
+    VALUE_NA = '?'
 
-    # Batch Defaults
-    BATCH_SIZE    = 50
-    BATCH_OVERLAP = 25
+    # Window Defaults
+    WINDOW_SIZE    = 50
+    WINDOW_OVERLAP = 25
 
     # MySQL Settings
     HOST     = '127.0.0.1'
@@ -27,24 +28,36 @@ class Collection:
     PASSWORD = ''
 
     def __init__(self, name, data=[], attr_names=[], attr_types=[],
-                 labels=[], batch_size=BATCH_SIZE,
-                 batch_overlap=BATCH_OVERLAP):
+                 window_size=WINDOW_SIZE,
+                 window_overlap=WINDOW_OVERLAP,
+                 analyzer=None):
         self.name           = name
         self.data           = data
         self.attr_names     = attr_names
         self.attr_types     = attr_types
-        self.labels         = labels
-        self.batch_size     = batch_size
-        self.batch_overlap  = batch_overlap
+        self.window_size    = window_size
+        self.window_overlap = window_overlap
+        self.analyzer       = analyzer
 
-
-    def import_data(self, filename, label_count):
-        a = Arff(arff=filename, label_count=label_count)
+    def import_data(self, filename):
+        a = Arff(arff=filename)
         self.data.extend(a[:, :])
         self.attr_names = a.attr_names.copy()
         self.attr_types = a.attr_types.copy()
-        self.label_count = label_count
 
+    def get_entry_by_value(self, feature_names, values):
+        # Ensure that both metadata and value to filter by is sent
+        if len(feature_names) != len(values):
+            return None
+
+        for i in range(len(feature_names)):
+            name = feature_names[i]
+            value = values[i]
+            if name not in self.attr_names:
+                return None
+
+    # def get_entries_by_span(self, feature_names, start, stop, value):
+        
     async def add_entry(self, data):
         entry = []
         for i in range(len(self.attr_names)):
@@ -63,10 +76,10 @@ class Collection:
                 entry.append(self.VALUE_NA)
         self.data.append(entry)
 
-        # Analyze latest batch if ready
-        if len(self.data) % self.batch_overlap == 0 and \
-            len(self.data) >= self.batch_size:
-            analysis = await self.analyze_batch(start=(-1*self.batch_size))
+        # Analyze latest window if ready
+        if len(self.data) % self.window_overlap == 0 and \
+            len(self.data) >= self.window_size:
+            analysis = await self.analyze_window(start=(-1*self.window_size))
 
         # Not ready yet, don't return anything
         else:
@@ -94,45 +107,61 @@ class Collection:
         f.write('%\n%\n%')
         f.close()
 
-    async def analyze_all(self, batch_size=None, batch_overlap=None):
+    async def analyze_all(self, window_size=None, window_overlap=None):
         analysis = []
-        # Use initialized batch_overlap if not overridden
-        if batch_overlap is not None and isinstance(batch_overlap, int):
-            bo = batch_overlap
+        # Use initialized window_overlap if not overridden
+        if window_overlap is not None and isinstance(window_overlap, int):
+            bo = window_overlap
         else:
-            bo = self.batch_overlap
+            bo = self.window_overlap
         
-        # Use initialized batch_size if not overridden
-        if batch_size is not None and isinstance(batch_size, int):
-            bs = batch_size
+        # Use initialized window_size if not overridden
+        if window_size is not None and isinstance(window_size, int):
+            bs = window_size
         else:
-            bs = self.batch_size
+            bs = self.window_size
 
         for i in range(len(self.data) // bo):
             start = i * bs
             end = start + bs
 
-            # Only analyze full batches
+            # Only analyze full windows
             if end >= len(self.data):
                 break
-            analysis.append(self.analyze_batch(start, end))
+            analysis.append(self.analyze_window(start, end))
         return analysis
 
-    async def analyze_batch(self, start=0, end=-1):
-        batch = self.data[start:end]
+    async def analyze_window(self, start=0, end=-1):
+        window = [row[3:] for row in self.data]
         
-        # TODO: Send batch to be analyzed by ML & generate report
-        # Placeholder analysis that finds all even timestamps in batch
-        print()
-        print('COLLECTION::{}::DUMMY_ANALYSIS'.format(self.name))
-        analysis = {'name': self.name, 'values': []}
-        for entry in batch:
-            print(entry)
-            if entry[1] % 2 == 0:
-                analysis['values'].append(entry[1])
-        print()
+        # TODO: Send window to be analyzed by ML & generate report
+        # Placeholder analysis that finds all even timestamps in window
+        # print()
+        # print('COLLECTION::{}::DUMMY_ANALYSIS'.format(self.name))
+        # analysis = {'name': self.name, 'values': []}
+        # for entry in window:
+        #     print(entry)
+        #     if entry[1] % 2 == 0:
+        #         analysis['values'].append(entry[1])
+        # print()
+        # print()
+        # print('COLLECTION::{}::WINDOW_ANALYSIS'.format(self.name))
+        # print('COLLECTION::{}::WINDOW {}'.format(self.name, window))
+        # if self.analyzer is None:
+        #     return None
+        # prediction = self.analyzer.predict(window)
+        # analysis = {'name': self.name, 'value': prediction}
+        # print('COLLECTION::{}::PREDICTION {}'.format(self.name, prediction))
+        # print()
+
+        labels = ['jump', 'not jump', 'not jump']
+        idx = randint(0, 9) % len(labels)
+
+        analysis = {'name': self.name, 'value': labels[idx]}
 
         return analysis       
+
+    # async def analyze_one(self, id):
 
     async def create_table(self):
         conn = await aiomysql.connect(host=self.HOST, port=self.PORT,
@@ -209,8 +238,6 @@ class Collection:
     async def load_from_db(self):
         if not self.table_exists():
             raise CollectionError('Unable to load from db: no db found!')
-        
-        
 
     def __str__(self):
         s = '__{}__\n'.format(self.name)
