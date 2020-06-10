@@ -135,25 +135,7 @@ class Collection:
         window = self.data[start:end]
         
         # TODO: Send window to be analyzed by ML & generate report
-        # Placeholder analysis that finds all even timestamps in window
-        # print()
-        # print('COLLECTION::{}::DUMMY_ANALYSIS'.format(self.name))
-        # analysis = {'name': self.name, 'values': []}
-        # for entry in window:
-        #     print(entry)
-        #     if entry[1] % 2 == 0:
-        #         analysis['values'].append(entry[1])
-        # print()
-        # print()
-        # print('COLLECTION::{}::WINDOW_ANALYSIS'.format(self.name))
-        # print('COLLECTION::{}::WINDOW {}'.format(self.name, window))
-        # if self.analyzer is None:
-        #     return None
-        # prediction = self.analyzer.predict(window)
-        # analysis = {'name': self.name, 'value': prediction}
-        # print('COLLECTION::{}::PREDICTION {}'.format(self.name, prediction))
-        # print()
-
+        # Placeholder analysis that randomly selects "not jump" or "Lutz"
         labels = ['Lutz', 'not jump', 'not jump']
         idx = randint(0, 9) % len(labels)
 
@@ -165,9 +147,7 @@ class Collection:
             'start': window[0][3],
             'end': window[-1][3]}
 
-        return analysis       
-
-    # async def analyze_one(self, id):
+        return analysis
 
     async def create_table(self):
         conn = await aiomysql.connect(host=self.HOST, port=self.PORT,
