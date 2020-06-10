@@ -19,7 +19,7 @@ class Analyzer:
             self.classifier = pickle.load(f)
             f.close()
 
-    def analyze(self, features):
+    def predict(self, features):
         if self.classifier is None:
             raise AnalyzerError('Classifier not setup, unable to analyze data')
 

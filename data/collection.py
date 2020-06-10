@@ -132,7 +132,7 @@ class Collection:
         return analysis
 
     async def analyze_window(self, start=0, end=-1):
-        window = [row[3:] for row in self.data]
+        window = self.data[start:end]
         
         # TODO: Send window to be analyzed by ML & generate report
         # Placeholder analysis that finds all even timestamps in window
@@ -154,10 +154,16 @@ class Collection:
         # print('COLLECTION::{}::PREDICTION {}'.format(self.name, prediction))
         # print()
 
-        labels = ['jump', 'not jump', 'not jump']
+        labels = ['Lutz', 'not jump', 'not jump']
         idx = randint(0, 9) % len(labels)
 
-        analysis = {'name': self.name, 'value': labels[idx]}
+        analysis = {
+            'name': self.name,
+            'value': labels[idx]
+            'session': window[0][1],
+            'athlete': window[0][0],
+            'start': window[0][3],
+            'end': window[-1][3]}
 
         return analysis       
 
