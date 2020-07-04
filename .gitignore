@@ -5,7 +5,5 @@
 *._*
 .env
 
-# Ignore DB files
-db.sqlite3
-.DS_STORE
-.coverage
+# Ignore sensitive files
+db_settings.py

@@ -1,43 +1,38 @@
 #!/usr/bin/env python3
 
 ##
-# IO Events
+# Data Keys: JSON entry names used in server/client messages
 ##
-CONNECT       = 'connect'
-CONNECT_ERROR = 'connect_error' 
-DISCONNECT    = 'disconnect'
-
-###
-# Client Events
-###
-CLIENT_DATA               = 'client_data'
-ANGULAR_VELOCITY_ENTRY    = 'av_entry'
-HEART_RATE_ENTRY          = 'hr_entry'
-LINEAR_ACCELERATION_ENTRY = 'la_entry'
-MAGNETIC_FIELD_ENTRY      = 'mf_entry'
-TEMPERATURE_ENTRY         = 'te_entry'
-CLIENT_REQUEST            = 'request_data'
-
-###
-# Server Events
-###
-SERVER_DATA      = 'server_data'
-ANALYZED_DATA    = 'analyzed_data'
-REQUEST_RESPONSE = 'request_response'
-
-##
-# Client Entry Keys
-##
-ATHLETE_ID  = 'athlete'
-SESSION_ID  = 'session'
-SENSOR_ID   = 'sensor'
-TIME        = 'time'
-X           = 'x'
-Y           = 'y'
-Z           = 'z'
-MEASUREMENT = 'measurement'
-AVERAGE     = 'average'
-DATA_TYPE   = 'data_type'
+ACCELEROMETER           = 'accelerometer'
+ATHLETE_ID              = 'athlete'
+ATTRIBUTE               = 'attribute'
+AVERAGE                 = 'average'
+DATA_TYPE               = 'data_type'
+END_TIME                = 'end'
+EVENTS                  = 'events'
+EVENT_ID                = 'event_id'
+GYROSCOPE               = 'gyroscope'
+ID                      = 'id'
+LOCATION                = 'location'
+MAGNETOMETER            = 'magnetometer'
+MEASUREMENT             = 'measurement'
+QUALITATIVE_ATTRIBUTES  = 'qual_attributes'
+QUANTITATIVE_ATTRIBUTES = 'quan_attributes'
+READINGS                = 'readings'
+READING_ID              = 'reading'
+SENSOR_ID               = 'sensor'
+SENSOR_PLACEMENTS       = 'placements'
+SESSION_ID              = 'session'
+SPORT                   = 'sport'
+START_TIME              = 'start'
+SUBEVENTS               = 'subevents'
+TIME                    = 'time'
+TYPE                    = 'type'
+UNITS                   = 'units'
+VALUE                   = 'value'
+X                       = 'x'
+Y                       = 'y'
+Z                       = 'z'
 
 ##
 # Stored Data Paths

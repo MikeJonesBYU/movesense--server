@@ -1,0 +1,10 @@
+###
+# DB settings
+###
+DB_DIALECT  = '' # Defaults to postgresql
+DB_DRIVER   = '' # Defaults to psycopg2
+DB_USER     = ''
+DB_HOST     = '' # Defaults to localhost
+DB_PASS     = ''
+DB_PORT     = '' # Default port
+DB_NAME     = ''

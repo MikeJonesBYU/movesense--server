@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 import asyncio
-import aiomysql
 from random import randint
 
 
 from constants import TIME
 from tools.arff import Arff
-from tools.analyzer import Analyzer
+# from tools.analyzer import Analyzer
 from tools.errors import CollectionError
 
 
@@ -20,12 +19,6 @@ class Collection:
     # Window Defaults
     WINDOW_SIZE    = 50
     WINDOW_OVERLAP = 25
-
-    # MySQL Settings
-    HOST     = '127.0.0.1'
-    PORT     = 3306
-    USER     = 'girrowfe'
-    PASSWORD = ''
 
     def __init__(self, name, data=[], attr_names=[], attr_types=[],
                  window_size=WINDOW_SIZE,
@@ -55,8 +48,6 @@ class Collection:
             value = values[i]
             if name not in self.attr_names:
                 return None
-
-    # def get_entries_by_span(self, feature_names, start, stop, value):
         
     async def add_entry(self, data):
         entry = []
@@ -148,82 +139,6 @@ class Collection:
             'end': window[-1][3]}
 
         return analysis
-
-    async def create_table(self):
-        conn = await aiomysql.connect(host=self.HOST, port=self.PORT,
-                                      user=self.USER, password=self.PASSWORD,
-                                      db=self.name)
-        cur = await conn.cursor()
-        async with conn.cursor() as cur:
-            # Construct create table query
-            # Handle ID label manually; assumes ID is a field in the data
-            create_table = ('CREATE TABLE IF NOT EXISTS {} '
-                            '(id INT UNSIGNED NOT NULL AUTO_INCREMENT'
-                            .format(self.name))
-            for i in range(len(self.attr_names) - 1):
-                name = self.attr_names[i+1]
-                type = self.attr_types[i+1]
-                if type == self.REAL:
-                    type = 'FLOAT'
-                elif type == self.INTEGER:
-                    type = 'INT'
-                else:
-                    type = 'TEXT'
-                create_table += ', {} {}'.format(name, type)
-            create_table += ', PRIMARY KEY(id));'
-
-            # Create table if not already there
-            await cur.execute(create_table)
-            await conn.commit()
-        conn.close()
-
-    async def save_to_db(self):
-        conn = await aiomysql.connect(host=self.HOST, port=self.PORT,
-                                      user=self.USER, password=self.PASSWORD,
-                                      db=self.name)
-        cur = await conn.cursor()
-        async with conn.cursor() as cur:
-            table_exists = await self.table_exists()
-            if not table_exists:
-                await self.create_table()
-
-            # Update table to reflect current data state
-            # Construct query
-            update_query = "INSERT INTO {} ({}) values (%s".format(
-                self.name, ", ".join(self.attr_names))
-            for i in range(len(self.attr_names) - 1):
-                update_query += ",%s"
-            update_query += ") ON DUPLICATE KEY UPDATE "
-            for i in range(len(self.attr_names) - 1):
-                update_query += "{} = VALUES({}), ".format(
-                    self.attr_names[i], self.attr_names[i])
-            update_query += "{} = VALUES({})".format(
-                self.attr_names[-1], self.attr_names[-1])
-
-            # Execute query
-            await cur.executemany(update_query, self.data)
-            await conn.commit()
-
-        conn.close()
-
-    async def table_exists(self):
-        exists = False
-        conn = await aiomysql.connect(host=self.HOST, port=self.PORT,
-                                      user=self.USER, password=self.PASSWORD,
-                                      db=self.name)
-        cur = await conn.cursor()
-        async with conn.cursor() as cur:
-            await cur.execute(("SELECT COUNT(*) "
-                               "FROM information_schema.tables "
-                               "WHERE {} = '{0}'".format(self.name)))
-            if cur.fetchone()[0] == 1:
-                exists = True
-        conn.close()
-        return exists
-
-    async def load_from_db(self):
-        if not self.table_exists():
-            raise CollectionError('Unable to load from db: no db found!')
 
     def __str__(self):
         s = '__{}__\n'.format(self.name)
