@@ -10,7 +10,6 @@ import uuid
 from constants import *
 from settings import *
 from handlers.base import BaseHandler
-from data.collection import Collection
 from tools.analyzer import Analyzer
 from tools.db import DBManager
 
@@ -57,47 +56,6 @@ class IOServer:
         type_clf = self.get_latest_clf(TYPE_CLF_DIR)
 
         self.analyzer = Analyzer()
-        
-        ## TODO: Assume IMUReadings come in complete, not one piece at a time.
-        # Initialize with blank data
-        self.av_data = Collection('angular_velocity', [],
-                                  attr_names=[ATHLETE_ID, SESSION_ID,
-                                              SENSOR_ID, TIME, X, Y, Z],
-                                  attr_types=[
-                                      Collection.STRING, Collection.STRING,
-                                      Collection.STRING, Collection.INTEGER,
-                                      Collection.REAL, Collection.REAL,
-                                      Collection.REAL])
-        self.hr_data = Collection('heart_rate', [],
-                                  attr_names=[ATHLETE_ID, SESSION_ID,
-                                              SENSOR_ID, TIME, AVERAGE],
-                                  attr_types=[
-                                      Collection.STRING, Collection.STRING,
-                                      Collection.STRING, Collection.INTEGER,
-                                      Collection.REAL])
-        self.la_data = Collection('linear_acceleration', [],
-                                  attr_names=[ATHLETE_ID, SESSION_ID,
-                                              SENSOR_ID, TIME, X, Y, Z],
-                                  attr_types=[
-                                      Collection.STRING, Collection.STRING,
-                                      Collection.STRING, Collection.INTEGER,
-                                      Collection.REAL, Collection.REAL,
-                                      Collection.REAL])
-        self.mf_data = Collection('magnetic_field', [],
-                                  attr_names=[ATHLETE_ID, SESSION_ID,
-                                              SENSOR_ID, TIME, X, Y, Z],
-                                  attr_types=[
-                                      Collection.STRING, Collection.STRING,
-                                      Collection.STRING, Collection.INTEGER,
-                                      Collection.REAL, Collection.REAL,
-                                      Collection.REAL])
-        self.te_data = Collection('temperature', [],
-                                  attr_names=[ATHLETE_ID, SESSION_ID,
-                                              SENSOR_ID, TIME, MEASUREMENT],
-                                  attr_types=[
-                                      Collection.STRING, Collection.STRING,
-                                      Collection.STRING, Collection.INTEGER,
-                                      Collection.REAL])
 
         # Setup database to store sessions. Load stored sessions.
         self.db = DBManager()
