@@ -8,8 +8,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 
-from constants import *
-from tools.errors import CollectionError
+from model_keys import *
 from .types import UUID_ID
 
 def is_uuid4(obj):

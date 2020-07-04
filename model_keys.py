@@ -33,12 +33,3 @@ VALUE                   = 'value'
 X                       = 'x'
 Y                       = 'y'
 Z                       = 'z'
-
-##
-# Stored Data Paths
-##
-AV_FILE = 'data/angular_velocity.arff'
-HR_FILE = 'data/heart_rate.arff'
-LA_FILE = 'data/linear_acceleration.arff'
-MF_FILE = 'data/magnetic_field.arff'
-TE_FILE = 'data/temperature.arff'

@@ -7,7 +7,7 @@ import os
 import socketio
 import uuid
 
-from constants import *
+from model_keys import *
 from settings import *
 from handlers.base import BaseHandler
 from tools.analyzer import Analyzer
@@ -28,11 +28,6 @@ class IOServer:
     ###
     CLIENT_DATA               = 'client_data'
     START_SESSION             = 'start_session'
-    ANGULAR_VELOCITY_ENTRY    = 'av_entry'
-    HEART_RATE_ENTRY          = 'hr_entry'
-    LINEAR_ACCELERATION_ENTRY = 'la_entry'
-    MAGNETIC_FIELD_ENTRY      = 'mf_entry'
-    TEMPERATURE_ENTRY         = 'te_entry'
     READING_ENTRY             = 'reading_entry'
     END_SESSION               = 'end_session'
     CLIENT_REQUEST            = 'request_data'
@@ -59,7 +54,6 @@ class IOServer:
 
         # Setup database to store sessions. Load stored sessions.
         self.db = DBManager()
-        
 
         # Setup Handlers
         base_handler = BaseHandler(self.analyzer, bool_clf_dir, type_clf_dir)
@@ -115,46 +109,6 @@ class IOServer:
             self.db.start_session(data[ID], data[ATHLETE_ID], data[SPORT],
                                   data[START_TIME],
                                   placements=data[SENSOR_PLACEMENTS])
-
-        @self.sio.on(self.ANGULAR_VELOCITY_ENTRY)
-        async def receive_angular_velocity(sid, data):
-            print('IO::{}::ID={}, data={}'.format(self.ANGULAR_VELOCITY_ENTRY, sid, data))
-            analysis = await self.av_data.add_entry(data)
-            if analysis is not None:
-                print('IO::{}::ANALYSIS={}'.format(self.ANGULAR_VELOCITY_ENTRY, analysis))
-                await self.send(self.ANALYZED_DATA, analysis)
-
-        @self.sio.on(self.HEART_RATE_ENTRY)
-        async def receive_heart_rate(sid, data):
-            print('IO::{}::ID={}, data={}'.format(self.HEART_RATE_ENTRY, sid, data))
-            analysis = await self.hr_data.add_entry(data)
-            if analysis is not None:
-                print('IO::{}::ANALYSIS={}'.format(self.HEART_RATE_ENTRY, analysis))
-                await self.send(self.ANALYZED_DATA, analysis)
-        
-        @self.sio.on(self.LINEAR_ACCELERATION_ENTRY)
-        async def receive_linear_acceleration(sid, data):
-            print('IO::{}::ID={}, data={}'.format(self.LINEAR_ACCELERATION_ENTRY, sid, data))
-            analysis = await self.la_data.add_entry(data)
-            if analysis is not None:
-                print('IO::{}::ANALYSIS={}'.format(self.LINEAR_ACCELERATION_ENTRY, analysis))
-                await self.send(self.ANALYZED_DATA, analysis)
-
-        @self.sio.on(self.MAGNETIC_FIELD_ENTRY)
-        async def receive_magnetic_field(sid, data):
-            print('IO::{}::ID={}, data={}'.format(self.MAGNETIC_FIELD_ENTRY, sid, data))
-            analysis = await self.mf_data.add_entry(data)
-            if analysis is not None:
-                print('IO::{}::ANALYSIS={}'.format(self.MAGNETIC_FIELD_ENTRY, analysis))
-                await self.send(self.ANALYZED_DATA, analysis)
-
-        @self.sio.on(self.TEMPERATURE_ENTRY)
-        async def receive_temperature(sid, data):
-            print('IO::{}::ID={}, data={}'.format(self.TEMPERATURE_ENTRY, sid, data))
-            analysis = await self.temp_data.add_entry(data)
-            if analysis is not None:
-                print('IO::{}::ANALYSIS={}'.format(self.TEMPERATURE_ENTRY, analysis))
-                await self.send(self.ANALYZED_DATA, analysis)
 
         @self.sio.on(self.READING_ENTRY)
         async def receive_reading(sid, data):
