@@ -8,7 +8,7 @@ import uuid
 from db_settings import (DB_DIALECT, DB_DRIVER, DB_HOST, DB_NAME, DB_PASS,
                          DB_PORT, DB_USER)
 from data import models
-from constants import *
+from model_keys import *
 from .analyzer import Analyzer
 
 
