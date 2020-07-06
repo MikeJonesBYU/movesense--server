@@ -50,7 +50,7 @@ class IOServer:
         bool_clf = self.get_latest_clf(BOOL_CLF_DIR)
         type_clf = self.get_latest_clf(TYPE_CLF_DIR)
 
-        self.analyzer = Analyzer()
+        self.analyzer = Analyzer(pickled_bool_clf=bool_clf)
 
         # Setup database to store sessions. Load stored sessions.
         self.db = DBManager()

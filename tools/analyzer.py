@@ -193,6 +193,9 @@ class Analyzer:
         formatted = self.format_readings(readings, sensor)
 
         if self.bool_clf is None or len(self.bool_args) == 0:
+            print('Still running fake classifier...')
+            print('bool_clf is None: {}'.format(self.bool_clf is None))
+            print('len(bool_args) == 0:'.format(len(self.bool_args) == 0))
             # TODO: Use real analyzer
             # Placeholder analysis that randomly selects an event or not
             idx = randint(0, 9) % 3
