@@ -4,6 +4,7 @@ import uuid
 
 from sqlalchemy import Table, Column, String, Integer, ForeignKey, Float, Enum
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import exists
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -72,18 +73,24 @@ class Session(Base):
 
     @classmethod
     def get_session_sensors(cls, db, id):
-        session = db.query(cls).filter_by(id=id).one()
-        return session.sensors
+        session = db.query(cls).filter_by(id=id).first()
+        if session is not None:
+            return session.sensors
+        return []
 
     @classmethod
     def get_session_events(cls, db, id):
-        session = db.query(cls).filter_by(id=id).one()
-        return session.events
+        session = db.query(cls).filter_by(id=id).first()
+        if session is not None:
+            return session.events
+        return []
 
     @classmethod
     def get_session_readings(cls, db, id):
-        session = db.query(cls).filter_by(id=id).one()
-        return session.get_readings()
+        session = db.query(cls).filter_by(id=id).first()
+        if session is not None:
+            return session.get_readings()
+        return []
 
     def get_sensor_by_serial(self, serial):
         found = None
