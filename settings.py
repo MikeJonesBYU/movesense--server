@@ -15,5 +15,5 @@ LOG_DIR = 'log'
 ###
 # Analyzer settings
 ###
-BOOL_CLF_DIR = 'analyzer'
-TYPE_CLF_DIR = 'data'
+BOOL_CLF_DIR = 'classifiers/bool'
+TYPE_CLF_DIR = 'classifiers/type'
