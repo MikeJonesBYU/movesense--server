@@ -50,7 +50,7 @@ class IOServer:
         bool_clf = self.get_latest_clf(BOOL_CLF_DIR)
         type_clf = self.get_latest_clf(TYPE_CLF_DIR)
 
-        self.analyzer = Analyzer(pickled_bool_clf=bool_clf)
+        self.analyzer = Analyzer(150, 75, bool_clf, None)
 
         # Setup database to store sessions. Load stored sessions.
         self.db = DBManager()
@@ -112,7 +112,7 @@ class IOServer:
 
         @self.sio.on(self.READING_ENTRY)
         async def receive_reading(sid, data):
-            print('IO::{}::ID={}, data={}'.format(self.READING_ENTRY, sid, data))
+            #print('IO::{}::ID={}, data={}'.format(self.READING_ENTRY, sid, data))
             # Unpack for db
             self.db.add_reading(
                 data[SESSION_ID], data[SENSOR_ID], uuid.uuid4(),
@@ -126,6 +126,7 @@ class IOServer:
                 ## TODO: What do events look like coming out of the analyzer?
                 ## TODO: Map sensor serial IDs to readings
                 found_event = await self.analyzer.is_event(readings, data[SENSOR_ID])
+                print('found event analysis: {}'.format(found_event))
                 if found_event:
                     athlete = self.db.get_session(data[SESSION_ID]).athlete
                     ## TODO: Send back notification that we found an event

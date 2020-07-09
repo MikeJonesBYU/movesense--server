@@ -3,10 +3,12 @@
 import pickle
 import pandas as pd
 from random import randint
+from sklearn.ensemble import RandomForestClassifier
 
 from tools.errors import AnalyzerError
 
 from analyzer.skater.gather_data import gather_data
+from analyzer.skater.modeling import impute_nans, drop_uneeded_targets
 from analyzer.skater.utils import parse_args
 
 
@@ -31,8 +33,8 @@ class Analyzer:
         analyzes data for the type of an event
     window_size : int
         # rows to be sent to classifiers
-    window_overlap : int
-        # rows that are duplicates from the previous window
+    window_rate : int
+        # rows to wait before starting next analysis
 
     Methods
     -------
@@ -56,7 +58,7 @@ class Analyzer:
     BOOL_PARAMS_FILE = 'analyzer/skater/jump_count_params.txt'
     TYPE_PARAMS_FILE = 'analyzer/skater/jump_type_params.txt'
 
-    def __init__(self, window_size=50, window_overlap=25,
+    def __init__(self, window_size=150, window_rate=75,
                  pickled_bool_clf=None, pickled_type_clf=None):
         """
         Parameters
@@ -64,9 +66,9 @@ class Analyzer:
         bool_args : list[str]
             Arguments used by bool preprocessor
         window_size : int, optional
-            Default window_size for the analyzer
-        window_overlap : int, optional
-            Default window_overlap for the analyzer
+            Default window_size for the analyzer, size of analysis
+        window_rate int, optional
+            Default for the analyzer, # of entries to receive between each analysis
         pickled_bool_clf : str, optional
             path to pickled boolean classifier file
         pickled_type_clf : str, optional
@@ -79,7 +81,7 @@ class Analyzer:
         self.bool_clf = None
         self.type_clf = None
         self.window_size = window_size
-        self.window_overlap = window_overlap
+        self.window_rate = window_rate
         if pickled_bool_clf is not None:
             self.load_bool(pickled_bool_clf)
         if pickled_type_clf is not None:
@@ -90,13 +92,6 @@ class Analyzer:
             contents = f.read()
 
         return contents.split()
-
-    def preprocess_window(self, args, data):
-        if len(args) == 0:
-            raise Exception("Empty args list")
-
-        parsed = parse_args(args)
-        return gather_data(parsed, data, True)
 
     def load_bool(self, clf_file):
         """
@@ -133,21 +128,21 @@ class Analyzer:
         """
 
         return reading_count >= self.window_size and \
-            reading_count % self.window_overlap == 0
+            reading_count % self.window_rate == 0
 
     def format_readings(self, readings, sensor):
         """
         Formats a list of readings into a dataframe useable by the
         preprocessor/classifier.
 
+        All readings in a window are collapsed into a 1-row dataframe
+
         Data frame format (top row is column names)
         --------------------------------------------
-        |         |6257          |Unnamed: 2 |Unnamed: 3 |Waist     |Unnamed: 5 |Unnamed: 6 |Unnamed: 7   |Unnamed: 8 |Unnamed: 9 |
-        |Format=7 |              |           |           |          |           |           |             |           |           |
-        |Time     |Accelerometer |NaN        |NaN        |Gyroscope |NaN        |NaN        |Magnetometer |NaN        |NaN        |
-        |NaN      |X             |Y          |Z          |X         |Y          |Z          |X            |Y          |Z          |
-        |15565019 |-10.249899    |-0.762756  |-0.729192  |0.307034  |-0.561372  |-0.006084  |45.630714    |1.902777   |-16.7538   |
-        ...
+        |         |Accelerometer-X-0 |Accelerometer-Y-0 |Accelerometer-Z-0 |Gyroscope-X-0 |Gyroscope-Y-0 |Gyroscope-Z-0 |Magnetometer-X-0 |Magnetometer-Y-0 |Magnetometer-Z-0 |...|Magnetometer-Z-<window_size-1>|
+        |15565019 |-10.249899        |-0.762756         |-0.729192         |0.307034      |-0.561372     |-0.006084     |45.630714        |1.902777         |-16.7538         |...|-0.729192                     |
+        
+        
 
         Parameters
         ----------
@@ -156,13 +151,14 @@ class Analyzer:
         """
 
         data = []
-        data.append(['Format=7', '', '', '', '', '', '', '', '', ''])
-        data.append(['Time', 'Accelerometer', 'NaN', 'NaN', 'Gyroscope', 'NaN',
-                     'NaN', 'Magnetometer', 'NaN', 'NaN'])
-        data.append(['NaN', 'X', 'Y', 'Z', 'X', 'Y', 'Z', 'X', 'Y', 'Z'])
+        header = []
+        count = 0
         for reading in readings:
-            row = [
-                reading.timestamp,
+            header.extend([
+                f'Accelerometer-X-{count}', f'Accelerometer-Y-{count}', f'Accelerometer-Z-{count}',
+                f'Gyroscope-X-{count}', f'Gyroscope-Y-{count}', f'Gyroscope-Z-{count}',
+                f'Magnetometer-X-{count}', f'Magnetometer-Y-{count}', f'Magnetometer-Z-{count}'])
+            values = [
                 reading.accelerometer.x,
                 reading.accelerometer.y,
                 reading.accelerometer.z,
@@ -173,11 +169,9 @@ class Analyzer:
                 reading.magnetometer.y,
                 reading.magnetometer.z
             ]
-            data.append(row)
-        return pd.DataFrame(data, columns=[
-            '', sensor, 'Unnamed: 2', 'Unnamed: 3',
-            'Waist', 'Unnamed: 5', 'Unnamed: 6', 'Unnamed: 7', 'Unnamed: 8',
-            'Unnamed: 9'])
+            data.extend(values)
+            count += 1
+        return pd.DataFrame([data], columns=header)
 
     async def is_event(self, readings, sensor):
         """
@@ -190,7 +184,7 @@ class Analyzer:
             List of Readings in the window to be analyzed
         """
 
-        formatted = self.format_readings(readings, sensor)
+        preprocessed = self.format_readings(readings, sensor)
 
         if self.bool_clf is None or len(self.bool_args) == 0:
             print('Still running fake classifier...')
@@ -203,8 +197,13 @@ class Analyzer:
 
             # raise AnalyzerError(
             #     'Event bool classifier not setup, unable to analyze data')
-        preprocessed = self.preprocess_window(self.bool_args, formatted)
-        return self.bool_clf.predict(preprocessed)
+
+        predictions = self.bool_clf.predict(preprocessed)
+        for prediction in predictions:
+            if prediction > 0:
+                return True
+
+        return False
     
     async def predict_event_type(self, readings, sensor):
         """
