@@ -82,8 +82,6 @@ You can then connect with:
 Lists the tables in the database.
 
 ```
-
-```
 select * from {table_name};
 ```
 Lists all entries from the table specified.
