@@ -41,9 +41,14 @@ sudo python io_server.py
 ### Helpful Commands on the AWS Server
 There are a few bash commands that have been added to the AWS server.
 
-To list the current server instances running:
+To list the current server processes running:
 ```
 server_status
+```
+
+To kill a server process in the background:
+```
+sudo kill {process_id}
 ```
 
 To start a server in the background:
