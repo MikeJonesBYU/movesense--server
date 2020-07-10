@@ -30,5 +30,78 @@ python server.py -h
 ### IOServer
 If the mobile app communicates with socket.io, the IOServer can be used. To start one, run
 ```
-python io_server.py
+python io_server.py -p 8000
 ```
+The server port defaults to port 80 if none is specified. To run on port 80, however, you need to run as root:
+```
+sudo python io_server.py
+```
+
+
+### Helpful Commands on the AWS Server
+There are a few bash commands that have been added to the AWS server.
+
+To list the current server instances running:
+```
+server_status
+```
+
+To start a server in the background:
+```
+server_start
+```
+
+To clear the database
+```
+clear_db
+```
+
+### Database Interaction
+Data sent from the app to the server is stored in a PostgreSQL database. To view the data you need to connect to the database and query the data.
+
+To connect to the database:
+```
+sudo -u postgres psql movesense_db
+```
+This lets you interact with the movesense_db using psql.
+Alternatively, if you log in to psql:
+```
+sudo -u postgres psql
+```
+You can then connect with:
+```
+\c movesense_db
+```
+
+
+#### Helpful psql Commands
+
+```
+\d
+```
+Lists the tables in the database.
+
+```
+select * from {table_name};
+```
+Lists all entries from the table specified.
+
+```
+select column_name from information_schema.columns where table_name = '{table_name}';
+```
+Lists all column names from the specified table.
+
+```
+\h
+```
+Lists other query commands.
+
+```
+\?
+```
+Lists other psql commands
+
+```
+\q
+```
+Exits psql
