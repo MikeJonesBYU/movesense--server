@@ -137,6 +137,8 @@ class Event(Base):
                 unique=True, primary_key=True)
     type = Column('type', String())
     session = Column('session', UUID_ID(), ForeignKey('session.id'))
+    bool_classifier = Column('bool_classifier', String())
+    type_classifier = Column('type_classifier', String())
     subevents = relationship('Subevent')
     qualitative_attributes = relationship(
         'QualitativeAttribute', secondary=event_qual_association_table)
@@ -161,6 +163,8 @@ class Event(Base):
             ID: str(self.id),
             TYPE: self.type,
             SESSION_ID: str(self.session),
+            BOOL_CLASSIFIER: self.bool_classifier,
+            TYPE_CLASSIFIER: self.type_classifier,
             SUBEVENTS: [subevent.dictionary() for subevent in self.subevents],
             QUALITATIVE_ATTRIBUTES: [quality.dictionary() for quality in self.qualitative_attributes],
             QUANTITATIVE_ATTRIBUTES: [quantity.dictionary() for quantity in self.quantitative_attributes]

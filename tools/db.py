@@ -153,7 +153,8 @@ class DBManager:
             self.save()
             del self.sessions[id]
 
-    def add_event(self, event_id, session_id, event_type, start, end):
+    def add_event(self, event_id, session_id, event_type, start, end,
+                  bool_clf, type_clf):
         ## TODO: What do events look like coming out of the analyzer?
         qualities, quantities, subevents = [], [], []
         session_over = False
@@ -170,6 +171,7 @@ class DBManager:
         
         event = models.Event(
             id=event_id, type=event_type, session=session_id,
+            bool_classifier=bool_clf, type_classifier=type_clf,
             subevents=subevents, qualitative_attributes=qualities,
             quantitative_attributes=quantities)
         self.db.add(event)

@@ -50,7 +50,7 @@ class IOServer:
         bool_clf = self.get_latest_clf(BOOL_CLF_DIR)
         type_clf = self.get_latest_clf(TYPE_CLF_DIR)
 
-        self.analyzer = Analyzer(pickled_bool_clf=bool_clf,
+        self.analyzer = Analyzer(pickled_bool_clf=None,
                                  pickled_type_clf=type_clf)
 
         # Setup database to store sessions. Load stored sessions.
@@ -125,20 +125,12 @@ class IOServer:
                 start = -1*self.analyzer.bool_window_size # Only analyze latest window
                 readings = self.db.get_readings(data[SESSION_ID])[start:]
 
-                ## TODO: What do events look like coming out of the analyzer?
-                ## TODO: Map sensor serial IDs to readings
                 found_event = await self.analyzer.is_event(readings)
                 print('found event analysis: {}'.format(found_event))
 
-                if found_event and self.analyzer.type_can_analyze(reading_count):
-                    start = -1*self.analyzer.type_window_size # Only analyze latest window
-                    readings = self.db.get_readings(data[SESSION_ID])[start:]
-                    athlete = self.db.get_session(data[SESSION_ID]).athlete
-
-                    ## TODO: What do events look like coming out of the analyzer?
-                    ## TODO: Map sensor serial IDs to readings
-                    event_type = await self.analyzer.predict_event_type(
-                        readings)
+                athlete = self.db.get_session(data[SESSION_ID]).athlete
+                if found_event:
+                    bool_clf = self.analyzer.get_bool_clf_name()
                     ## TODO: Send back notification that we found an event
                     print('IO::{}::FOUND_EVENT'.format(self.READING_ENTRY))
                     event_id = uuid.uuid4()
@@ -146,16 +138,26 @@ class IOServer:
                         EVENT_ID: str(event_id),
                         SESSION_ID: data[SESSION_ID],
                         ATHLETE_ID: str(athlete),
+                        BOOL_CLASSIFIER: bool_clf,
                         START_TIME: readings[0].timestamp,
                         END_TIME: readings[-1].timestamp
                     })
-                    print('IO::{}::SEND_EVENT={}'.format(
+
+                # Run type classifier to predict event
+                if found_event and self.analyzer.type_can_analyze(reading_count):                    
+                    start = -1*self.analyzer.type_window_size # Only analyze latest window
+                    readings = self.db.get_readings(data[SESSION_ID])[start:]
+                    event_type = await self.analyzer.predict_event_type(
+                        readings)
+                    type_clf = self.analyzer.get_type_clf_name()
+                    print('IO::{}::SEND_EVENTS={}'.format(
                         self.READING_ENTRY, event_type))
+                    
                     event = self.db.add_event(
                         event_id, data[SESSION_ID], event_type,
-                        readings[0].timestamp, readings[-1].timestamp)
+                        readings[0].timestamp, readings[-1].timestamp,
+                        bool_clf, type_clf)
 
-                    ## TODO: Send back notification with the event type
                     await self.send(self.EVENT_DATA, event.dictionary())
 
         @self.sio.on(self.END_SESSION)

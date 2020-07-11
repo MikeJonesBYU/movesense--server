@@ -133,6 +133,16 @@ class Analyzer:
             self.type_clf = pickle.load(f)
             f.close()
 
+    def get_bool_clf_name(self):
+        if self.bool_clf is None:
+            return 'No classifier set'
+        return self.bool_clf.__class__.__name__
+
+    def get_type_clf_name(self):
+        if self.type_clf is None:
+            return 'No classifier set'
+        return self.type_clf.__class__.__name__
+
     def bool_can_analyze(self, reading_count):
         """
         Checks to see if the number of readings warrants another
@@ -367,7 +377,8 @@ class Analyzer:
             # TODO: Use real analyzer
             # Placeholder analysis that randomly selects an event or not
             idx = randint(0, 9) % 3
-            return idx == 0
+            # return idx == 0
+            return True
 
             # raise AnalyzerError(
             #     'Event bool classifier not setup, unable to analyze data')
@@ -381,7 +392,7 @@ class Analyzer:
     
     async def predict_event_type(self, readings):
         """
-        Run type classifier on readings to look for an event occurrence
+        Run type classifier on readings to look for an event occurrences
         If no type classifier is in use, always guess event type was Lutz
         
         Parameters
@@ -393,14 +404,13 @@ class Analyzer:
         if self.type_clf is None:
              # TODO: Use real analyzer
             # Placeholder analysis that always returns a Lutz jump
-            return 'Lutz'
+            return ['Lutz']
 
             # raise AnalyzerError(
             #     'Event type classifier is not setup, unable to analyze data')
         preprocessed = self.preprocess_type(readings)
-        prediction = self.type_clf.predict(preprocessed)
-        return JUMP_TYPES[int(prediction[0])]
-        
+        predictions = self.type_clf.predict(preprocessed)
+        return JUMP_TYPES[int(predictions[0])]
 
     def __str__(self):
         return '<Analyzer bool_clf={}, type_clf={}>'.format(
