@@ -139,12 +139,14 @@ class DBManager:
             sensor = models.SensorPlacement(
                 id=uuid.uuid4(),
                 sensor=placement[SENSOR_ID], session=id,
-                location=placement[LOCATION], readings=[])
+                location=models.SensorPlacement.Location(int(placement[LOCATION])),
+                readings=[])
             self.db.add(sensor)
             sensors.append(sensor)
 
-        self.sessions[id] = models.Session(id=id, athlete=athlete, sport=sport,
-                                           start=start, end=end, sensors=sensors)
+        self.sessions[id] = models.Session(
+            id=id, athlete=athlete, sport=models.Session.Sport(int(sport)),
+            start=start, end=end, sensors=sensors)
         self.db.add(self.sessions[id])
 
     def end_session(self, id, end):
