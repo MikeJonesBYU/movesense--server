@@ -83,12 +83,7 @@ class IOServer:
     def save_data(self, file, data):
         file = open(file, 'a')
         file.write('{}\n'.format(data))
-        file.close()
-
-    def get_requested_data(self, data):
-        data_type = data.get(DATA_TYPE, None)
-        if data_type is None:
-            return {}
+        file.close()       
 
     def init_socketio(self):
         @self.sio.on(self.CONNECT)
@@ -98,11 +93,6 @@ class IOServer:
         @self.sio.on(self.CONNECT_ERROR)
         def connect_error(sid, data):
             print('IO::{}::ID={}, data={}'.format(self.CONNECT_ERROR, sid, data))
-        
-        @self.sio.on(self.CLIENT_DATA)
-        async def receive_client_data(sid, data):
-            print('IO::{}::ID={}, data={}'.format(self.CLIENT_DATA, sid, data))
-            await self.send(self.SERVER_DATA, {'msg': 'Message received!'})
 
         @self.sio.on(self.START_SESSION)
         def start_session(sid, data):
@@ -158,7 +148,8 @@ class IOServer:
                         readings[0].timestamp, readings[-1].timestamp,
                         bool_clf, type_clf)
 
-                    await self.send(self.EVENT_DATA, event.dictionary())
+                    await self.send(self.EVENT_DATA,
+                                    event.dictionary(self.db.db))
 
         @self.sio.on(self.END_SESSION)
         def end_session(sid, data):
@@ -167,9 +158,13 @@ class IOServer:
 
         @self.sio.on(self.CLIENT_REQUEST)
         async def handle_request(sid, data):
-            print('IO::{}::ID={}, data={}'.format(self.CLIENT_REQUEST, sid, data))
-            response = self.get_requested_data(data)
-            await self.send(self.REQUEST_RESPONSE, response)
+            print('IO::{}::ID={}, data={}'.format(
+                self.CLIENT_REQUEST, sid, data))
+            sessions = self.db.get_all_sessions(data[ATHLETE_ID])
+            await self.send(self.REQUEST_RESPONSE, {
+                SESSION_ID: [
+                    session.dictionary(self.db.db) for session in sessions]
+            })
 
         @self.sio.on(self.DISCONNECT)
         def diconnect(sid):

@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 import asyncio
+import enum
 import uuid
 
-from sqlalchemy import Table, Column, String, Integer, ForeignKey, Float, Enum
+from sqlalchemy import (Table, Column, String, Integer, ForeignKey,
+                        Float, Enum, BigInteger)
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import exists
 from sqlalchemy.ext.declarative import declarative_base
@@ -28,6 +30,14 @@ event_qual_association_table = Table(
 
 
 class Session(Base):
+    class Sport(enum.Enum):
+        SKATING = 0
+        VOLLEYBALL = 1
+        SWIMMING = 2
+    
+        def __str__(self):
+            return '{}'.format(self.name).lower()
+
     """
     Class for periods with recorded sensor data on athletic performance.
 
@@ -54,14 +64,26 @@ class Session(Base):
     -------
     find_by_athlete(db:sqlalchemy.Session, athlete:uuid4)
         Helper function for finding Sessions with a given athlete
-    get_session
+    get_session_sensors(db:sqlalchemy.Session, id:str)
+        Helper function for getting a list of sensors used in a given session
+    get_session_events(db:sqlalchemy.Session, id:str)
+        Helper function for getting a list of events in a given session
+    get_session_readings(db:sqlalchemy.Session, id:str)
+        Helper function for getting a list of readings in a given session
+    get_sensor_by_serial(serial:str)
+        Helper function for getting a sensor with the specified serial from
+        the session
+    get_readings()
+        Helper function that returns the list of readings in the session
+    dictionary()
+        Returns Session object in dictionary format 
     """
     __tablename__ = 'session'
 
     id = Column('id', UUID_ID(), default=uuid.uuid4, nullable=False,
                 unique=True, primary_key=True)
     athlete = Column('athlete', UUID_ID(), nullable=False)
-    sport = Column('sport', String)
+    sport = Column('sport', Enum(Sport))
     start = Column('start', Integer)
     end = Column('end', Integer)
     sensors = relationship('SensorPlacement')
@@ -75,9 +97,7 @@ class Session(Base):
     def get_session_sensors(cls, db, id):
         session = db.query(cls).filter_by(id=id).first()
         if session is not None:
-            return session.sensors
-        return []
-
+            return session.sensorsto
     @classmethod
     def get_session_events(cls, db, id):
         session = db.query(cls).filter_by(id=id).first()
@@ -91,6 +111,9 @@ class Session(Base):
         if session is not None:
             return session.get_readings()
         return []
+
+    def get_sport_display(self):
+        return str(self.sport)
 
     def get_sensor_by_serial(self, serial):
         found = None
@@ -110,15 +133,23 @@ class Session(Base):
             readings.extend(sensor.readings)
         return readings
 
-    def dictionary(self):
+    def dictionary(self, db):
+        """
+        Returns dictionary of instance fields
+
+        Parameters
+        ----------
+        db : sqlalchemy.Session
+            Pass in sqlalchemy Session to lookup related fields
+        """
         return {
             ID: str(self.id),
             ATHLETE_ID: str(self.athlete),
-            SPORT: self.sport,
+            SPORT: self.sport.value,
             START_TIME: self.start,
             END_TIME: self.end,
-            SENSOR_PLACEMENTS: [sensor.dictionary() for sensor in self.sensors],
-            EVENTS: [event.dictionary() for event in self.events]
+            SENSOR_PLACEMENTS: [sensor.dictionary(db) for sensor in self.sensors],
+            EVENTS: [event.dictionary(db) for event in self.events]
         }
 
     def __repr__(self):
@@ -146,28 +177,45 @@ class Event(Base):
 
     def get_start(self):
         start = float('inf')
-        for sub in self.subevents.all():
+        for sub in self.subevents:
             if sub.time < start:
                 start = sub.time
+        if start == float('inf'):
+            start = 1
         return start
 
     def get_end(self):
         end = 0
-        for sub in self.subevents.all():
+        for sub in self.subevents:
             if sub.time > end:
                 end = sub.time
         return end
 
-    def dictionary(self):
+    def dictionary(self, db):
+        """
+        Returns dictionary of instance fields
+
+        Parameters
+        ----------
+        db : sqlalchemy.Session
+            Pass in sqlalchemy Session to lookup related fields
+        """
         return {
             ID: str(self.id),
             TYPE: self.type,
+            START_TIME: self.get_start(),
+            END_TIME: self.get_end(),
             SESSION_ID: str(self.session),
             BOOL_CLASSIFIER: self.bool_classifier,
             TYPE_CLASSIFIER: self.type_classifier,
-            SUBEVENTS: [subevent.dictionary() for subevent in self.subevents],
-            QUALITATIVE_ATTRIBUTES: [quality.dictionary() for quality in self.qualitative_attributes],
-            QUANTITATIVE_ATTRIBUTES: [quantity.dictionary() for quantity in self.quantitative_attributes]
+            SUBEVENTS: [
+                subevent.dictionary(db) for subevent in self.subevents],
+            QUALITATIVE_ATTRIBUTES: [
+                quality.dictionary(db) for quality \
+                in self.qualitative_attributes],
+            QUANTITATIVE_ATTRIBUTES: [
+                quantity.dictionary(db) for quantity \
+                    in self.quantitative_attributes]
         }
 
     def __repr__(self):
@@ -179,22 +227,26 @@ class Event(Base):
 
 
 class Subevent(Base):
-    TYPE_SKATE_TAKEOFF = 'skate_takeoff'
-    TYPE_SKATE_LANDING = 'skate_landing'
-    SUBEVENT_TYPES = [TYPE_SKATE_TAKEOFF, TYPE_SKATE_LANDING]
-
     __tablename__ = 'subevent'
 
     id = Column('id', UUID_ID(), default=uuid.uuid4, nullable=False,
                 unique=True, primary_key=True)
     event = Column('event', UUID_ID(), ForeignKey('event.id'))
-    type = Column('type', Enum(*SUBEVENT_TYPES, name='subevent_types'), nullable=False)
-    time = Column('value', Integer)
+    type = Column('type', String, nullable=False)
+    time = Column('value', BigInteger)
 
-    def dictionary(self):
+    def dictionary(self, db):
+        """
+        Returns dictionary of instance fields
+
+        Parameters
+        ----------
+        db : sqlalchemy.Session
+            Pass in sqlalchemy Session to lookup related fields
+        """
         return {
             ID: str(self.id),
-            EVENT_ID: str(self.event.id),
+            EVENT_ID: str(self.event),
             TYPE: self.type,
             TIME: self.time
         }
@@ -218,7 +270,15 @@ class QualitativeAttribute(Base):
         back_populates='qualitative_attributes')
     attribute = Column('attribute', String, nullable=False, unique=True)
 
-    def dictionary(self):
+    def dictionary(self, db):
+        """
+        Returns dictionary of instance fields
+
+        Parameters
+        ----------
+        db : sqlalchemy.Session
+            Pass in sqlalchemy Session to lookup related fields
+        """
         return {
             ID: str(self.id),
             ATTRIBUTE: self.attribute
@@ -242,10 +302,18 @@ class QuantitativeAttribute(Base):
     units = Column('units', String)
     value = Column('value', Float)
 
-    def dictionary(self):
+    def dictionary(self, db):
+        """
+        Returns dictionary of instance fields
+
+        Parameters
+        ----------
+        db : sqlalchemy.Session
+            Pass in sqlalchemy Session to lookup related fields
+        """
         return {
             ID: str(self.id),
-            EVENT_ID: str(self.event.id),
+            EVENT_ID: str(self.event),
             ATTRIBUTE: self.attribute,
             UNITS: self.units,
             VALUE: self.value
@@ -261,19 +329,16 @@ class QuantitativeAttribute(Base):
 
 
 class SensorPlacement(Base):
-    LOCATION_LEFT_WRIST = 'left_wrist'
-    LOCATION_RIGHT_WRIST = 'right_wrist'
-    LOCATION_LEFT_FOOT = 'left_foot'
-    LOCATION_RIGHT_FOOT = 'right_foot'
-    LOCATION_LOWER_BACK = 'lower_back'
-    LOCATION_WAIST = 'waist'
-    LOCATION_HIP = 'hip'
-    LOCATION_HEAD = 'head'
-    LOCATIONS = [
-        LOCATION_LEFT_WRIST, LOCATION_RIGHT_WRIST,
-        LOCATION_LEFT_FOOT, LOCATION_RIGHT_FOOT,
-        LOCATION_LOWER_BACK, LOCATION_WAIST,
-        LOCATION_HIP, LOCATION_HEAD]
+    class Location(enum.Enum):
+        LEFT_WRIST = 0
+        RIGHT_WRIST = 1
+        SMALL_OF_BACK = 2
+        LEFT_FOOT = 3
+        RIGHT_FOOT = 4
+        WAIST = 5
+
+        def __str__(self):
+            return '{}'.format(self.name).lower()
 
     __tablename__ = 'sensor_placement'
 
@@ -281,9 +346,11 @@ class SensorPlacement(Base):
                 unique=True, primary_key=True)
     sensor = Column('sensor', String)
     session = Column('session', UUID_ID(), ForeignKey('session.id'))
-    location = Column('location', Enum(*LOCATIONS, name='locations'),
-                      nullable=False)
+    location = Column('location', Enum(Location), nullable=False)
     readings = relationship('Reading')
+
+    def get_location_display(self):
+        return str(self.location)
 
     def get_reading_by_timestamp(self, timestamp):
         found = None
@@ -293,13 +360,21 @@ class SensorPlacement(Base):
                 break
         return found
 
-    def dictionary(self):
+    def dictionary(self, db):
+        """
+        Returns dictionary of instance fields
+
+        Parameters
+        ----------
+        db : sqlalchemy.Session
+            Pass in sqlalchemy Session to lookup related fields
+        """
         return {
             ID: str(self.id),
             SENSOR_ID: self.sensor,
-            SESSION_ID: str(self.session.id),
-            LOCATION: self.location,
-            READINGS: [reading.dictionary() for reading in self.readings] 
+            SESSION_ID: str(self.session),
+            LOCATION: self.location.value,
+            READINGS: [reading.dictionary(db) for reading in self.readings]
         }
 
     def __repr__(self):
@@ -317,7 +392,7 @@ class Reading(Base):
     id = Column('id', UUID_ID(), default=uuid.uuid4, nullable=False,
                 unique=True, primary_key=True)
     sensor = Column('sensor', UUID_ID(), ForeignKey('sensor_placement.id'))
-    timestamp = Column('timestamp', Integer)
+    timestamp = Column('timestamp', BigInteger)
     accelerometer = relationship('AccelerometerReading', uselist=False,
                                  back_populates='reading')
     gyroscope = relationship('GyroscopeReading', uselist=False,
@@ -325,14 +400,23 @@ class Reading(Base):
     magnetometer = relationship('MagnetometerReading', uselist=False,
                                 back_populates='reading')
 
-    def dictionary(self):
+    def dictionary(self, db):
+        """
+        Returns dictionary of instance fields
+
+        Parameters
+        ----------
+        db : sqlalchemy.Session
+            Pass in sqlalchemy Session to lookup related fields
+        """
+        placement = db.query(SensorPlacement).filter_by(id=self.sensor).one()
         return {
             ID: str(self.id),
-            SENSOR_ID: self.sensor.sensor,
+            SENSOR_ID: placement.sensor,
             TIME: self.timestamp,
-            ACCELEROMETER: self.accelerometer.dictionary(),
-            GYROSCOPE: self.gyroscope.dictionary(),
-            MAGNETOMETER: self.magnetometer.dictionary()
+            ACCELEROMETER: self.accelerometer.dictionary(db),
+            GYROSCOPE: self.gyroscope.dictionary(db),
+            MAGNETOMETER: self.magnetometer.dictionary(db)
         }
 
     def __repr__(self):
@@ -357,7 +441,15 @@ class AccelerometerReading(Base):
     z = Column('z', Float)
     units = Column('units', String(length=10), default=UNITS)
 
-    def dictionary(self):
+    def dictionary(self, db):
+        """
+        Returns dictionary of instance fields
+
+        Parameters
+        ----------
+        db : sqlalchemy.Session
+            Pass in sqlalchemy Session to lookup related fields
+        """
         return {
             ID: str(self.id),
             READING_ID: str(self.reading_id),
@@ -390,7 +482,15 @@ class GyroscopeReading(Base):
     z = Column('z', Float)
     units = Column('units', String(length=10), default=UNITS)
 
-    def dictionary(self):
+    def dictionary(self, db):
+        """
+        Returns dictionary of instance fields
+
+        Parameters
+        ----------
+        db : sqlalchemy.Session
+            Pass in sqlalchemy Session to lookup related fields
+        """
         return {
             ID: str(self.id),
             READING_ID: str(self.reading_id),
@@ -423,7 +523,15 @@ class MagnetometerReading(Base):
     z = Column('z', Float)
     units = Column('units', String(length=10), default=UNITS)
 
-    def dictionary(self):
+    def dictionary(self, db):
+        """
+        Returns dictionary of instance fields
+
+        Parameters
+        ----------
+        db : sqlalchemy.Session
+            Pass in sqlalchemy Session to lookup related fields
+        """
         return {
             ID: str(self.id),
             READING_ID: str(self.reading_id),
