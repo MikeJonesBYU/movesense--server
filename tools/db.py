@@ -157,7 +157,8 @@ class DBManager:
 
     def add_event(self, event_id, session_id, event_type, start, end,
                   bool_clf, type_clf):
-        ## TODO: What do events look like coming out of the analyzer?
+        ## TODO: How are we getting qualitative attributes,
+        ##       quantitative attributes, and subevents?
         qualities, quantities, subevents = [], [], []
         session_over = False
 
@@ -174,7 +175,8 @@ class DBManager:
         event = models.Event(
             id=event_id, type=event_type, session=session_id,
             bool_classifier=bool_clf, type_classifier=type_clf,
-            subevents=subevents, qualitative_attributes=qualities,
+            start=start, end=end, subevents=subevents,
+            qualitative_attributes=qualities,
             quantitative_attributes=quantities)
         self.db.add(event)
         session.events.append(event)

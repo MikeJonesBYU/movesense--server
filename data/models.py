@@ -84,8 +84,8 @@ class Session(Base):
                 unique=True, primary_key=True)
     athlete = Column('athlete', UUID_ID(), nullable=False)
     sport = Column('sport', Enum(Sport))
-    start = Column('start', Integer)
-    end = Column('end', Integer)
+    start = Column('start', BigInteger)
+    end = Column('end', BigInteger)
     sensors = relationship('SensorPlacement')
     events = relationship('Event')
 
@@ -168,28 +168,14 @@ class Event(Base):
                 unique=True, primary_key=True)
     type = Column('type', String())
     session = Column('session', UUID_ID(), ForeignKey('session.id'))
+    start = Column('start', BigInteger)
+    end = Column('end', BigInteger)
     bool_classifier = Column('bool_classifier', String())
     type_classifier = Column('type_classifier', String())
     subevents = relationship('Subevent')
     qualitative_attributes = relationship(
         'QualitativeAttribute', secondary=event_qual_association_table)
     quantitative_attributes = relationship('QuantitativeAttribute')
-
-    def get_start(self):
-        start = float('inf')
-        for sub in self.subevents:
-            if sub.time < start:
-                start = sub.time
-        if start == float('inf'):
-            start = 1
-        return start
-
-    def get_end(self):
-        end = 0
-        for sub in self.subevents:
-            if sub.time > end:
-                end = sub.time
-        return end
 
     def dictionary(self, db):
         """
@@ -203,8 +189,8 @@ class Event(Base):
         return {
             ID: str(self.id),
             TYPE: self.type,
-            START_TIME: self.get_start(),
-            END_TIME: self.get_end(),
+            START_TIME: self.start,
+            END_TIME: self.end,
             SESSION_ID: str(self.session),
             BOOL_CLASSIFIER: self.bool_classifier,
             TYPE_CLASSIFIER: self.type_classifier,
