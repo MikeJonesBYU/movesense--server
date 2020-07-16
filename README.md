@@ -62,16 +62,16 @@ clear_db
 ```
 
 ### Database Interaction
-Data sent from the app to the server is stored in a PostgreSQL database. To view the data you need to connect to the database and query the data.
+Data sent from the app to the server is stored in a PostgreSQL database. To view the data you need to connect to the database and query the data. There is a password for the movesense user (found in db_settings.py).
 
 To connect to the database:
 ```
-sudo -u postgres psql movesense_db
+psql -U movesense movesense_db
 ```
 This lets you interact with the movesense_db using psql.
 Alternatively, if you log in to psql:
 ```
-sudo -u postgres psql
+psql -U movesense
 ```
 You can then connect with:
 ```
@@ -95,6 +95,11 @@ Lists all entries from the table specified.
 select column_name from information_schema.columns where table_name = '{table_name}';
 ```
 Lists all column names from the specified table.
+
+```
+\copy {table_name} to '{filename.csv}' csv header
+```
+Exports the table to the filename in csv format.
 
 ```
 \h
