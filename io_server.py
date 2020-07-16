@@ -3,6 +3,7 @@
 from aiohttp import web
 import asyncio
 from argparse import ArgumentParser
+from datetime import datetime
 import os
 import socketio
 import uuid
@@ -50,7 +51,7 @@ class IOServer:
         bool_clf = self.get_latest_clf(BOOL_CLF_DIR)
         type_clf = self.get_latest_clf(TYPE_CLF_DIR)
 
-        self.analyzer = Analyzer(pickled_bool_clf=None,
+        self.analyzer = Analyzer(pickled_bool_clf=bool_clf,
                                  pickled_type_clf=type_clf)
 
         # Setup database to store sessions. Load stored sessions.
@@ -88,22 +89,22 @@ class IOServer:
     def init_socketio(self):
         @self.sio.on(self.CONNECT)
         def connect(sid, environ):
-            print('IO::{}::ID={}'.format(self.CONNECT, sid))
+            print('{} -- {} -- ID={}'.format(datetime.now(), self.CONNECT, sid))
 
         @self.sio.on(self.CONNECT_ERROR)
         def connect_error(sid, data):
-            print('IO::{}::ID={}, data={}'.format(self.CONNECT_ERROR, sid, data))
+            print('{} -- {} -- ID={}, data={}'.format(datetime.now(), self.CONNECT_ERROR, sid, data))
 
         @self.sio.on(self.START_SESSION)
         def start_session(sid, data):
-            print('IO::{}::ID={}, data={}'.format(self.START_SESSION, sid, data))
+            print('{} -- {} -- ID={}, data={}'.format(datetime.now(), self.START_SESSION, sid, data))
             self.db.start_session(data[ID], data[ATHLETE_ID], data[SPORT],
                                   data[START_TIME],
                                   placements=data[SENSOR_PLACEMENTS])
 
         @self.sio.on(self.READING_ENTRY)
         async def receive_reading(sid, data):
-            #print('IO::{}::ID={}, data={}'.format(self.READING_ENTRY, sid, data))
+            #print('{} -- {} -- ID={}, data={}'.format(datetime.now(), self.READING_ENTRY, sid, data))
             # Unpack for db
             self.db.add_reading(
                 data[SESSION_ID], data[SENSOR_ID], uuid.uuid4(),
@@ -121,8 +122,7 @@ class IOServer:
                 athlete = self.db.get_session(data[SESSION_ID]).athlete
                 if found_event:
                     bool_clf = self.analyzer.get_bool_clf_name()
-                    ## TODO: Send back notification that we found an event
-                    print('IO::{}::FOUND_EVENT'.format(self.READING_ENTRY))
+                    print('{} -- {} -- FOUND_EVENT'.format(datetime.now(), self.READING_ENTRY))
                     event_id = uuid.uuid4()
                     await self.send(self.EVENT_FOUND, {
                         EVENT_ID: str(event_id),
@@ -140,8 +140,8 @@ class IOServer:
                     event_type = await self.analyzer.predict_event_type(
                         readings)
                     type_clf = self.analyzer.get_type_clf_name()
-                    print('IO::{}::SEND_EVENTS={}'.format(
-                        self.READING_ENTRY, event_type))
+                    print('{} -- {} -- SEND_EVENT={}'.format(
+                        datetime.now(), self.READING_ENTRY, event_type))
                     
                     event = self.db.add_event(
                         event_id, data[SESSION_ID], event_type,
@@ -153,13 +153,13 @@ class IOServer:
 
         @self.sio.on(self.END_SESSION)
         def end_session(sid, data):
-            print('IO::{}::ID={}, data={}'.format(self.END_SESSION, sid, data))
+            print('{} -- {} -- ID={}, data={}'.format(datetime.now(), self.END_SESSION, sid, data))
             self.db.end_session(data[ID], data[END_TIME])
 
         @self.sio.on(self.CLIENT_REQUEST)
         async def handle_request(sid, data):
-            print('IO::{}::ID={}, data={}'.format(
-                self.CLIENT_REQUEST, sid, data))
+            print('{} -- {} -- ID={}, data={}'.format(
+                datetime.now(), self.CLIENT_REQUEST, sid, data))
             sessions = self.db.get_all_sessions(data[ATHLETE_ID])
             await self.send(self.REQUEST_RESPONSE, {
                 SESSION_ID: [
@@ -168,7 +168,7 @@ class IOServer:
 
         @self.sio.on(self.DISCONNECT)
         def diconnect(sid):
-            print('IO::{}::ID={}'.format(self.DISCONNECT, sid))
+            print('{} -- {} -- ID={}'.format(datetime.now(), self.DISCONNECT, sid))
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='Process server settings')
