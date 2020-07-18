@@ -36,6 +36,7 @@ class IOServer:
     ###
     # Server Events
     ###
+    EVENT_NOT_FOUND           = 'no_event_found'
     EVENT_FOUND               = 'event_found'
     EVENT_DATA                = 'event_data'
     SERVER_DATA               = 'server_data'
@@ -120,15 +121,23 @@ class IOServer:
                 print('found event analysis: {}'.format(found_event))
 
                 athlete = self.db.get_session(data[SESSION_ID]).athlete
+                bool_clf = self.analyzer.get_bool_clf_name()
                 if found_event:
-                    bool_clf = self.analyzer.get_bool_clf_name()
-                    print('{} -- {} -- FOUND_EVENT'.format(datetime.now(), self.READING_ENTRY))
+                    print('{} -> {} -- FOUND_EVENT'.format(
+                        readings[0].timestamp, readings[-1].timestamp))
                     event_id = uuid.uuid4()
                     await self.send(self.EVENT_FOUND, {
                         EVENT_ID: str(event_id),
                         SESSION_ID: data[SESSION_ID],
                         ATHLETE_ID: str(athlete),
                         BOOL_CLASSIFIER: bool_clf,
+                        START_TIME: readings[0].timestamp,
+                        END_TIME: readings[-1].timestamp
+                    })
+                else:
+                    print('{} -> {} -- NO EVENT FOUND'.format(
+                        readings[0].timestamp, readings[-1].timestamp))
+                    await self.send(self.EVENT_NOT_FOUND, {
                         START_TIME: readings[0].timestamp,
                         END_TIME: readings[-1].timestamp
                     })
