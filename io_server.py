@@ -23,6 +23,7 @@ class IOServer:
     CONNECT                   = 'connect'
     CONNECT_ERROR             = 'connect_error' 
     DISCONNECT                = 'disconnect'
+    HEARTBEAT                 = 'heartbeat'
 
     ###
     # Client Events
@@ -89,23 +90,26 @@ class IOServer:
 
     def init_socketio(self):
         @self.sio.on(self.CONNECT)
-        def connect(sid, environ):
-            print('{} -- {} -- ID={}'.format(datetime.now(), self.CONNECT, sid))
+        async def connect(sid, environ):
+            print('{} -- ID={} -- {}'.format(datetime.now(), sid, self.CONNECT))
+            await self.send(self.HEARTBEAT, {self.HEARTBEAT: '1'})
 
         @self.sio.on(self.CONNECT_ERROR)
         def connect_error(sid, data):
-            print('{} -- {} -- ID={}, data={}'.format(datetime.now(), self.CONNECT_ERROR, sid, data))
+            print('{} -- ID={} -- {}'.format(datetime.now(), sid, self.CONNECT_ERROR))
+            print('\tdata={}'.format(data))
 
         @self.sio.on(self.START_SESSION)
         def start_session(sid, data):
-            print('{} -- {} -- ID={}, data={}'.format(datetime.now(), self.START_SESSION, sid, data))
+            print('{} -- ID={} -- {}'.format(datetime.now(), sid, self.START_SESSION))
+            print('\tdata={}'.format(data))
             self.db.start_session(data[ID], data[ATHLETE_ID], data[SPORT],
                                   data[START_TIME],
                                   placements=data[SENSOR_PLACEMENTS])
 
         @self.sio.on(self.READING_ENTRY)
         async def receive_reading(sid, data):
-            #print('{} -- {} -- ID={}, data={}'.format(datetime.now(), self.READING_ENTRY, sid, data))
+            #print('{} -- ID={} -- {}, data={}'.format(datetime.now(), sid, self.READING_ENTRY, data))
             # Unpack for db
             self.db.add_reading(
                 data[SESSION_ID], data[SENSOR_ID], uuid.uuid4(),
@@ -160,15 +164,22 @@ class IOServer:
                     await self.send(self.EVENT_DATA,
                                     event.dictionary(self.db.db))
 
+        @self.sio.on(self.HEARTBEAT)
+        async def send_heartbeat(sid, data):
+            print('{} -- ID={} -- {}'.format(datetime.now(), sid, self.HEARTBEAT))
+            await self.send(self.HEARTBEAT, {self.HEARTBEAT: '1'})
+
         @self.sio.on(self.END_SESSION)
         def end_session(sid, data):
-            print('{} -- {} -- ID={}, data={}'.format(datetime.now(), self.END_SESSION, sid, data))
+            print('{} -- ID={} -- {}'.format(datetime.now(), sid, self.END_SESSION))
+            print('\tdata={}'.format(data))
             self.db.end_session(data[ID], data[END_TIME])
 
         @self.sio.on(self.CLIENT_REQUEST)
         async def handle_request(sid, data):
-            print('{} -- {} -- ID={}, data={}'.format(
-                datetime.now(), self.CLIENT_REQUEST, sid, data))
+            print('{} -- ID={} -- {}'.format(
+                datetime.now(), sid, self.CLIENT_REQUEST))
+            print('\tdata={}'.format(data))
             sessions = self.db.get_all_sessions(data[ATHLETE_ID])
             await self.send(self.REQUEST_RESPONSE, {
                 SESSION_ID: [
@@ -177,7 +188,7 @@ class IOServer:
 
         @self.sio.on(self.DISCONNECT)
         def diconnect(sid):
-            print('{} -- {} -- ID={}'.format(datetime.now(), self.DISCONNECT, sid))
+            print('{} -- ID={} -- {}'.format(datetime.now(), sid, self.DISCONNECT))
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='Process server settings')
