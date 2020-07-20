@@ -70,7 +70,7 @@ class Analyzer:
 
     def __init__(self, pickled_bool_clf=None, pickled_type_clf=None,
                  bool_window_size=150, bool_sample_interval=75,
-                 type_window_size=100, type_sample_interval=5):
+                 type_window_size=150, type_sample_interval=5):
         """
         Parameters
         ----------

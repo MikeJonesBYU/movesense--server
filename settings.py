@@ -16,4 +16,4 @@ LOG_DIR = 'log'
 # Analyzer settings
 ###
 BOOL_CLF_DIR = 'classifiers/bool'
-TYPE_CLF_DIR = 'classifiers/type'
+TYPE_CLF_DIR = 'classifiers/type/iteration2'
