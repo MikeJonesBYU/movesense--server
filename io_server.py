@@ -37,6 +37,7 @@ class IOServer:
     ###
     # Server Events
     ###
+    EVENT_SERVER_SHUTDOWN     = 'shutdown'
     EVENT_NOT_FOUND           = 'no_event_found'
     EVENT_FOUND               = 'event_found'
     EVENT_DATA                = 'event_data'
@@ -49,6 +50,7 @@ class IOServer:
         self.sio = socketio.AsyncServer()
         self.app = web.Application()
         self.sio.attach(self.app)
+        self.sockets = []
 
         bool_clf = self.get_latest_clf(BOOL_CLF_DIR)
         type_clf = self.get_latest_clf(TYPE_CLF_DIR)
@@ -93,6 +95,8 @@ class IOServer:
         async def connect(sid, environ):
             print('{} -- ID={} -- {}'.format(datetime.now(), sid, self.CONNECT))
             await self.send(self.HEARTBEAT, {self.HEARTBEAT: '1'})
+            self.sockets.append(sid)
+            print('sockets: {}'.format(self.sockets))
 
         @self.sio.on(self.CONNECT_ERROR)
         def connect_error(sid, data):
@@ -189,6 +193,7 @@ class IOServer:
         @self.sio.on(self.DISCONNECT)
         def diconnect(sid):
             print('{} -- ID={} -- {}'.format(datetime.now(), sid, self.DISCONNECT))
+            self.sockets.remove(sid)
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='Process server settings')
@@ -196,6 +201,15 @@ if __name__ == '__main__':
                         required=False, help='Server port number')
     args = parser.parse_args()
     server = IOServer()
+
+    async def on_shutdown(app):
+        print('{} >>>>> Server shutdown <<<<<'.format(datetime.now()))
+        for sid in server.sockets:
+            await server.send(server.EVENT_SERVER_SHUTDOWN, {})
+            # await server.sio.disconnect(sid)
+        print('{} >>>>> Shutting down db <<<<<'.format(datetime.now()))
+        server.db.shutdown()
+    server.app.on_shutdown.append(on_shutdown)
 
     if args.port:
         server.serve(port=args.port)

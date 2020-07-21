@@ -124,8 +124,33 @@ class DBManager:
             sessions.extend(self.get_athlete_sessions(athlete))
         return sessions
 
+    def save_session(self, id):
+        session = self.sessions[id]
+        self.db.add(session)
+        for event in session.events:
+            self.db.add(event)
+            for subevent in event.subevents:
+                self.db.add(subevent)
+            for quality in event.qualitative_attributes:
+                self.db.add(quality)
+            for quantity in event.quantitative_attributes:
+                self.db.add(quantity)
+        for sensor in session.sensors:
+            self.db.add(sensor)
+            for reading in sensor.readings:
+                self.db.add(reading)
+                self.db.add(reading.accelerometer)
+                self.db.add(reading.gyroscope)
+                self.db.add(reading.magnetometer)
+        self.save()
+
     def save(self):
         self.db.commit()
+
+    def shutdown(self):
+        print('Shutting down db...')
+        self.sessions = {}
+        self.db.close()
 
     def get_session(self, id):
         if id in self.sessions.keys():
@@ -147,12 +172,11 @@ class DBManager:
         self.sessions[id] = models.Session(
             id=id, athlete=athlete, sport=models.Session.Sport(int(sport)),
             start=start, end=end, sensors=sensors)
-        self.db.add(self.sessions[id])
 
     def end_session(self, id, end):
         if id in self.sessions.keys():
             self.sessions[id].end = end
-            self.save()
+            self.save_session(id)
             del self.sessions[id]
 
     def add_event(self, event_id, session_id, event_type, start, end,
@@ -178,10 +202,10 @@ class DBManager:
             start=start, end=end, subevents=subevents,
             qualitative_attributes=qualities,
             quantitative_attributes=quantities)
-        self.db.add(event)
         session.events.append(event)
 
         if session_over:
+            self.db.add(event)
             self.db.add(session)
             self.save()
         
@@ -214,7 +238,6 @@ class DBManager:
                 y=mag_data[Y],
                 z=mag_data[Z],
                 units=mag_data[UNITS])
-            self.db.add(mag)
 
             reading = models.Reading(
                 id=reading_id, sensor=sensor.id, timestamp=timestamp,
