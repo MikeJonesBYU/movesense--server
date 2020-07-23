@@ -8,7 +8,12 @@ To install all python dependencies, run
 pip install -r misc/requirements
 ```
 ### Database
-This app does require a database support with sqlalchemy. Create a db_settings.py file to instruct the server how to connect to the database (following the example provided). Hypothetically any database sqlalchemy can interact with can be used, but the default for this project is postgres. To view more information about how to install postgres, visit [PostgreSQL's site](https://www.postgresql.org/download/).
+This app does require a database support with sqlalchemy. Create a db_settings.py file to instruct the server how to connect to the database (following the example provided). Hypothetically any database sqlalchemy can interact with can be used, but the default for this project is postgres. To view more information about how to install postgres, visit [PostgreSQL's site](https://www.postgresql.org/download/). If you use PostgreSQL, you will need to have it installed, and have an account and database that the server can update with.
+
+#### Useful Links
+- [Granting user permissions](https://www.digitalocean.com/docs/databases/postgresql/how-to/modify-user-privileges/)
+- [Fixing peer authentication failed for user](https://gist.github.com/AtulKsol/4470d377b448e56468baef85af7fd614)
+
 
 ## Usage
 ### Base Server
