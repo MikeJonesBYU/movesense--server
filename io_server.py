@@ -96,7 +96,6 @@ class IOServer:
             print('{} -- ID={} -- {}'.format(datetime.now(), sid, self.CONNECT))
             await self.send(self.HEARTBEAT, {self.HEARTBEAT: '1'})
             self.sockets.append(sid)
-            print('sockets: {}'.format(self.sockets))
 
         @self.sio.on(self.CONNECT_ERROR)
         def connect_error(sid, data):
