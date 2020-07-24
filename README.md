@@ -2,6 +2,13 @@
 This is a server that analyzes with machine learning to look for meaningful data to be sent to a mobile application.
 
 ## Installation
+You will need the following installed with apt-get:
+- python3
+- pip
+- python-psycopg2
+- libpq-dev
+Additionally, if you're using postgres you'll want to install postgresql this way as well.
+
 ### Python
 To install all python dependencies, run
 ```
