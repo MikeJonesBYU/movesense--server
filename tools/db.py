@@ -148,7 +148,6 @@ class DBManager:
         self.db.commit()
 
     def shutdown(self):
-        print('Shutting down db...')
         self.sessions = {}
         self.db.close()
 
