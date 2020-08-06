@@ -192,7 +192,8 @@ class IOServer:
         @self.sio.on(self.DISCONNECT)
         def diconnect(sid):
             print('{} -- ID={} -- {}'.format(datetime.now(), sid, self.DISCONNECT))
-            self.sockets.remove(sid)
+            if sid in self.sockets:
+                self.sockets.remove(sid)
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='Process server settings')
