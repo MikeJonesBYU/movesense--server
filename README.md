@@ -24,30 +24,19 @@ This app does require a database support with sqlalchemy. Create a db_settings.p
 
 
 ## Usage
-### Base Server
-To start a basic server on the default port, run
+### IOServer
+To start the server, run
 ```
-python3 server.py
+python3 server.py -p 8000
 ```
-
-A port can be specified with
+The server port defaults to port 8000 if none is specified. If you want to run on port 80, you'll need to run as root:
 ```
-python3 server.py -p [port]
+sudo python3 server.py -p 80
 ```
 
 More information can be viewed with the command
 ```
 python3 server.py -h
-```
-
-### IOServer
-If the mobile app communicates with socket.io, the IOServer can be used. To start one, run
-```
-python3 io_server.py -p 8000
-```
-The server port defaults to port 8000 if none is specified. If you want to run on port 80, you'll need to run as root:
-```
-sudo python3 io_server.py -p 80
 ```
 
 
