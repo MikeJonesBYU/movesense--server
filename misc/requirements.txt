@@ -12,7 +12,7 @@ joblib==0.14.1
 multidict==4.7.3
 numpy==1.18.4
 pandas==1.0.3
-pip==20.1
+pip==21.1
 psycopg2==2.8.5
 PyMySQL==0.9.2
 python-dateutil==2.8.1
