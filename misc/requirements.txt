@@ -10,7 +10,7 @@ cryptography==2.9.2
 idna==2.9
 joblib==0.14.1
 multidict==4.7.3
-numpy==1.18.4
+numpy==1.22.0
 pandas==1.0.3
 pip==20.1
 psycopg2==2.8.5
